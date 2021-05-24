@@ -20,6 +20,7 @@ def process_data_wl1(data):
     tweets_agg = tweets_agg.withColumn("agg_retweets", blank_as_null("agg_retweets"))\
         .withColumn("agg_replies", blank_as_null("agg_replies"))  
     tweets_processed = tweets_agg.select('*',concat_ws(' ','agg_retweets','agg_replies').alias('agg_tweet_respond'))
+    tweets_agg.unpersist()
 
     tokenizer = Tokenizer(inputCol='agg_tweet_respond',
         outputCol="vectors")
@@ -29,11 +30,11 @@ def process_data_wl1(data):
 def apply_tf1(data,hashtf):
     if hashtf == True:
         hashingTF = HashingTF(inputCol="vectors", outputCol="tf")
-        tf = hashingTF.transform(data)
+        tf = hashingTF.transform(data).cache()
     else:
         cv = CountVectorizer(inputCol="vectors", outputCol="tf")
         tweets_cv = cv.fit(data)
-        tf = tweets_cv.transform(data)
+        tf = tweets_cv.transform(data).cache()
 
     selected_id = 202170318
     tweets_user_filtered = tf.where(f'user_id = {selected_id}')
@@ -44,6 +45,7 @@ def apply_tf1(data,hashtf):
     tf = tf.withColumn("CosineSim",cos_function('tf'))
     tf = tf.where(f'user_id <> {selected_id}')
     sorted_output_tf = tf.filter(tf.CosineSim > 0).sort(col('CosineSim').desc())
+    tf.unpersist()
     return sorted_output_tf.select(col('user_id').alias(f'Top Most Similar User IDs to {selected_id}'),
         col('CosineSim').alias(f'CosineSim')).show(5,truncate=False)
 
@@ -51,7 +53,8 @@ def process_data_wl2(data):
     wl2 = data.withColumn("mentioned_users", data["user_mentions"].getField('id')).cache()
     wl2_users = wl2.select(col('user_id'),col('mentioned_users'))
     wl2_users = wl2_users.withColumn("mentioned_users", explode("mentioned_users"))
-    wl2_users_agg = wl2_users.groupBy(col('user_id'),col('mentioned_users')).count().cache()
+    wl2_users_agg = wl2_users.groupBy(col('user_id'),col('mentioned_users')).count()
+    wl2_users.unpersist()
     return wl2_users_agg
 
 def apply_wl2(data):
@@ -74,7 +77,7 @@ def apply_wl2(data):
 
     n = 5
     mu_labels = model_mu.labels
-    mu_labels_ = array(*[lit(x) for x in mu_labels])
+    mu_labels_ = array(*[lit(x) for x in mu_labels]).cache()
     recommendations = array(*[struct(
         mu_labels_[col("recommendations")[i]["mentioned_users_indexed"]].alias("userId"),
         col("recommendations")[i]["rating"].alias("rating")
