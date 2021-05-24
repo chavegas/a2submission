@@ -77,7 +77,7 @@ def apply_wl2(data):
 
     n = 5
     mu_labels = model_mu.labels
-    mu_labels_ = array(*[lit(x) for x in mu_labels]).cache()
+    mu_labels_ = array(*[lit(x) for x in mu_labels])
     recommendations = array(*[struct(
         mu_labels_[col("recommendations")[i]["mentioned_users_indexed"]].alias("userId"),
         col("recommendations")[i]["rating"].alias("rating")
