@@ -54,7 +54,7 @@ def process_data_wl2(data):
     wl2_users = wl2.select(col('user_id'),col('mentioned_users'))
     wl2_users = wl2_users.withColumn("mentioned_users", explode("mentioned_users"))
     wl2_users_agg = wl2_users.groupBy(col('user_id'),col('mentioned_users')).count()
-    wl2_users.unpersist()
+    wl2_users
     return wl2_users_agg
 
 def apply_wl2(data):
@@ -94,6 +94,7 @@ if __name__ == "__main__":
         .appName("Assignment 2 WL 1") \
         .getOrCreate()
     spark.conf.set("spark.sql.shuffle.partitions",100)    
+    spark.conf.set("spark.debug.maxToStringFields",100)    
     tweeets_data = spark.read.option('multiline','true').json('tweets.json')    
     
     tweets_processed = process_data_wl1(tweeets_data).cache()
