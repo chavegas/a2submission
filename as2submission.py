@@ -70,10 +70,6 @@ def process_data_wl2(data):
     wl2_users = wl2_users.withColumn("mentioned_users", explode("mentioned_users"))
     #Aggregate each mentioned user by count
     wl2_users_agg = wl2_users.groupBy(col('user_id'),col('mentioned_users')).count()
-<<<<<<< HEAD
-=======
-    wl2_users.unpersist()
->>>>>>> parent of 0e62ae5... add
     return wl2_users_agg
 
 #Function to apply WL2
@@ -118,12 +114,8 @@ if __name__ == "__main__":
         .builder \
         .appName("Assignment 2 WL 1") \
         .getOrCreate()
-<<<<<<< HEAD
     #Set partitions and maxToStringFields based on optimisations
     spark.conf.set("spark.sql.shuffle.partitions",100)     
-=======
-    spark.conf.set("spark.sql.shuffle.partitions",100)    
->>>>>>> parent of 0e62ae5... add
     tweeets_data = spark.read.option('multiline','true').json('tweets.json')    
     #Apply functions
     tweets_processed = process_data_wl1(tweeets_data).cache()
